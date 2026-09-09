@@ -2,7 +2,8 @@
  * スキル得意ポケモンの厳選: Lv50・メインスキル最大で合計エナジーを最大化する
  * サブスキル 3 枠 (Lv10/25/50) × せいかくの全組み合わせを総当たりする。
  * 出力: docs/ranking/skill-build-lv50.md
- * 実行: bun run tools/calc/skillbuild.ts   (10〜15 分)
+ * 実行: bun run tools/calc/skillbuild.ts   (10 分前後)
+ *       bun run tools/calc/skillbuild.ts --from-cache   (前回の計算結果から Markdown だけ再生成)
  */
 import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -57,17 +58,30 @@ function evalAll(p: PokemonData, fieldIndex: number): Res[] {
 	return out;
 }
 
-const targets = pokemons.filter((p) => p.isFullyEvolved && (p.specialty === "Skills" || p.specialty === "All"));
+const candidates = pokemons.filter((p) => p.isFullyEvolved && (p.specialty === "Skills" || p.specialty === "All"));
+const excluded: string[] = [];
+const targets = candidates.filter((p) => {
+	const param = createStrengthParameter({ level: LEVEL, fieldIndex: -1, maxSkillLevel: true, event: "none" });
+	const r = new PokemonStrength(new PokemonIv({ pokemonName: p.name, level: LEVEL }), param).calculate();
+	if (!Number.isFinite(r.totalStrength) || r.totalStrength <= 0) { excluded.push(p.name); return false; }
+	return true;
+});
 const f0 = (n: number) => Math.round(n).toLocaleString("ja-JP");
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
+const CACHE = join(import.meta.dir, "cache/skillbuild.json");
+const useCache = process.argv.includes("--from-cache");
+const cache: Record<string, Record<string, Res[]>> = useCache ? await Bun.file(CACHE).json() : {};
 function section(title: string, fieldIndex: number): string {
 	let md = `## ${title}\n\n`;
 	const perPokemon: { p: PokemonData; sorted: Res[]; bySkillCount: Res }[] = [];
 	const score = new Map<string, { sum: number; wins: number; combo: Combo }>();
 	for (const p of targets) {
 		const t0 = Date.now();
-		const all = evalAll(p, fieldIndex);
+		const ck = `${fieldIndex}`;
+		cache[ck] ??= {};
+		const all: Res[] = cache[ck][p.name] ?? (cache[ck][p.name] = evalAll(p, fieldIndex).map((r) => ({ ...r, combo: { ...r.combo } })));
+		if (useCache) for (const r of all) r.combo = combos.find((c) => c.key === r.combo.key)!;
 		const sorted = [...all].sort((a, b) => b.total - a.total);
 		const bySkillCount = [...all].sort((a, b) => b.skillCount - a.skillCount)[0];
 		perPokemon.push({ p, sorted, bySkillCount });
@@ -75,7 +89,7 @@ function section(title: string, fieldIndex: number): string {
 		for (const r of all) {
 			const s = score.get(r.combo.key) ?? { sum: 0, wins: 0, combo: r.combo };
 			s.sum += r.total / max;
-			if (r === sorted[0]) s.wins++;
+			if (r.combo.key === sorted[0].combo.key) s.wins++;
 			score.set(r.combo.key, s);
 		}
 		console.error(`${title} ${jaPokemon[p.name] ?? p.name} ${((Date.now() - t0) / 1000).toFixed(1)}s best=${sorted[0].combo.label} ${f0(max)}`);
@@ -114,5 +128,9 @@ let md = `# スキル得意ポケモンの厳選: Lv50 最適サブスキル・�
 `;
 md += section("好物きのみでない場合 (きのみエナジー 1 倍)", -1);
 md += section("好物きのみの場合 (きのみエナジー 2 倍)", -2);
+md = md.replace("## 前提\n", `## 前提\n\n- 除外 (データ未確定で計算不能): ${excluded.map((n) => jaPokemon[n] ?? n).join("、") || "なし"}\n`);
+import { mkdirSync } from "node:fs";
+mkdirSync(join(import.meta.dir, "cache"), { recursive: true });
+writeFileSync(CACHE, JSON.stringify(cache));
 writeFileSync(join(import.meta.dir, "../../docs/ranking/skill-build-lv50.md"), md);
 console.log("done");
