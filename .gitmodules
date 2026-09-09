@@ -1,0 +1,3 @@
+[submodule "tools/pokesleep-tool"]
+	path = tools/pokesleep-tool
+	url = https://github.com/nitoyon/pokesleep-tool.git
