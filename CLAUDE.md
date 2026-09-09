@@ -7,6 +7,7 @@
 | 質問の種類 | 読むファイル | 裏取り先 |
 | --- | --- | --- |
 | 最強・理論値・比較 (きのみ / 食材 / スキル) | `docs/ranking/berry.md`, `ingredient.md`, `skill.md` | にとよん個体値計算機 (submodule のロジックで再計算) |
+| スキル得意の厳選 (最適サブスキル・せいかく、次善) | `docs/ranking/skill-build-lv50.md` (Lv50 総当たり) | `tools/calc/skillbuild.ts` を条件を変えて再実行 |
 | フィールド、解放条件、好物きのみ、ランク必要エナジー | `docs/fields.md`, `docs/ranking/field-ranks.md` | Game8 マップ一覧 |
 | EX フィールド (ワカクサ EX / シアン EX) のバフ・デバフ | `docs/expert-fields.md` | Game8、ポケらく |
 | 料理レシピ、必要食材、エナジー | `docs/recipes.md` | Game8 料理レシピ一覧 |
@@ -30,6 +31,7 @@ git -C tools/pokesleep-tool pull origin main   # 本家の更新を取り込む
 bun run tools/calc/ranking.ts                  # docs/ranking/{berry,ingredient,skill}.md
 bun run tools/calc/skills.ts                   # docs/main-skills.md
 bun run tools/calc/fields.ts                   # docs/ranking/field-ranks.md
+bun run tools/calc/skillbuild.ts               # docs/ranking/skill-build-lv50.md (10 分前後。--from-cache で表だけ再生成)
 python3 tools/calc/recipes.py                  # docs/recipes.md (Game8 から取得)
 ```
 
