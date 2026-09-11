@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 最強・理論値・比較 (きのみ / 食材 / スキル) | `docs/ranking/berry.md`, `ingredient.md`, `skill.md` | にとよん個体値計算機 (submodule のロジックで再計算) |
 | スキル得意の厳選 (最適サブスキル・せいかく、次善) | `docs/ranking/skill-build-lv50.md` (Lv50 総当たり) | `tools/calc/skillbuild.ts` を条件を変えて再実行 |
+| 手持ちの個体 A と B のどちらが強いか | `bun run tools/calc/compare.ts <英名> <Lv> "A=サブ,サブ,サブ;せいかく;スキルLv" "B=..."` を実行 (タップ頻度・好物有無の別で出る) | 判断の一般則は `docs/notes/individual-compare.md` |
 | フィールド、解放条件、好物きのみ、ランク必要エナジー | `docs/fields.md`, `docs/ranking/field-ranks.md` | Game8 マップ一覧 |
 | EX フィールド (ワカクサ EX / シアン EX) のバフ・デバフ | `docs/expert-fields.md` | Game8、ポケらく |
 | 料理レシピ、必要食材、エナジー | `docs/recipes.md` | Game8 料理レシピ一覧 |
@@ -22,6 +23,7 @@
 
 - `tools/pokesleep-tool/` は nitoyon/pokesleep-tool (MIT) の git submodule。SessionStart フックで自動取得される。無ければ `git submodule update --init --depth 1 tools/pokesleep-tool`
 - `npm ci` は不要。`bun` で TypeScript を直接実行する (i18next は型 import のみ)
+- スキルレベルは「ゲーム内表示値」を渡す。スキルレベルアップ M/S 持ちは表示値がその分高い前提で入力する (ツールは自動加算しない)
 - 個別の条件で計算したいときは `tools/calc/ranking.ts` の `calc()` を参考に、`PokemonIv` + `createStrengthParameter` + `PokemonStrength.calculate()` を呼ぶ。フィールド指定は `fieldIndex` (0 ワカクサ … 6 アンバー, 7 ワカクサ EX, 8 シアン EX, -2 全部好物, -1 好物なし)
 
 ## 再生成コマンド
