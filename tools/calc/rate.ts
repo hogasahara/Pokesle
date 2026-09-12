@@ -52,7 +52,7 @@ const myIng = (ingStr?.trim() || (pokemon.ing3 ? "ABC" : "ABB")) as IngredientTy
 const slotsActive = level >= 80 ? 5 : level >= 70 ? 4 : level >= 50 ? 3 : level >= 25 ? 2 : 1;
 
 // ---- 計算 ----
-// 全 17 種。出現率は通説値 (金 2.3% / 青 5.7% / 白 12.5% を各サブスキルごとの確率として扱う。7×2.3+6×5.7+4×12.5≈100)。出典は docs/notes/individual-compare.md 参照
+// 全 17 種。出現率は Wiki* 検証/サブスキル抽選確率 の値 (同一レア度内は同確率: 金 2.3% / 青 5.7% / 白 12.5%。7×2.3+6×5.7+4×12.5≈100)
 const GOLD: SubSkillType[] = ["Berry Finding S", "Dream Shard Bonus", "Energy Recovery Bonus", "Helping Bonus", "Research EXP Bonus", "Skill Level Up M", "Sleep EXP Bonus"];
 const BLUE: SubSkillType[] = ["Helping Speed M", "Ingredient Finder M", "Inventory Up L", "Inventory Up M", "Skill Level Up S", "Skill Trigger M"];
 const WHITE: SubSkillType[] = ["Helping Speed S", "Ingredient Finder S", "Inventory Up S", "Skill Trigger S"];
@@ -157,4 +157,4 @@ for (const k of keys) {
 	console.log(`| ${mark}${k.name}${mark} | ${k.fmt(v)} | ${k.fmt(k.get(best))} | ${k.get(best) > 0 ? ((v / k.get(best)) * 100).toFixed(1) : "-"}% | ${((wBetter / wAll) * 100).toFixed(1)}% | ${best.label} |`);
 }
 if (isSkillStrengthZero(pokemon.skill)) console.log("\n注: このメインスキルはエナジー換算 0 (げんき系など)。合計エナジーにスキル分は含まれないので、主指標のスキル発動/日で判断する。");
-console.log("\n注: 「これより上を引く確率」は、その指標でこの個体を上回る個体を 1 回の捕獲で引く確率。サブスキル出現率 (金 2.3% / 青 5.7% / 白 12.5%、各サブスキルごと。出典未確認の通説値) と性格の一様分布で重み付け。食材構成は一様扱い。0% は理論最大と同値。");
+console.log("\n注: 「これより上を引く確率」は、その指標でこの個体を上回る個体を 1 回の捕獲で引く確率。サブスキル出現率 (金 2.3% / 青 5.7% / 白 12.5%、各サブスキルごと。Wiki* 検証/サブスキル抽選確率 の値) と性格の一様分布で重み付け。食材構成は一様扱い。0% は理論最大と同値。");
