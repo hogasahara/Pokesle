@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 最強・理論値・比較 (きのみ / 食材 / スキル) | `docs/ranking/berry.md`, `ingredient.md`, `skill.md` | にとよん個体値計算機 (submodule のロジックで再計算) |
 | スキル得意の厳選 (最適サブスキル・せいかく、次善) | `docs/ranking/skill-build-lv50.md` (Lv50 総当たり) | `tools/calc/skillbuild.ts` を条件を変えて再実行 |
+| 厳選: この個体は理論値からどれだけ遠いか (妥協してよいか) | `bun run tools/calc/rate.ts <英名> <Lv> "サブ,サブ,サブ;せいかく;スキルLv;食材構成" [--field -2] [--tap 480] [--target 食材英名]` を実行。得意分野ごとの主指標 (きのみE / スキル回数 / 食材個数) と合計E の達成率、上回る個体を引く確率が出る | 判断の一般則は `docs/notes/individual-compare.md` |
 | 手持ちの個体 A と B のどちらが強いか | `bun run tools/calc/compare.ts <英名> <Lv> "A=サブ,サブ,サブ;せいかく;スキルLv" "B=..."` を実行 (タップ頻度・好物有無の別で出る) | 判断の一般則は `docs/notes/individual-compare.md` |
 | フィールド、解放条件、好物きのみ、ランク必要エナジー | `docs/fields.md`, `docs/ranking/field-ranks.md` | Game8 マップ一覧 |
 | EX フィールド (ワカクサ EX / シアン EX) のバフ・デバフ | `docs/expert-fields.md` | Game8、ポケらく |
