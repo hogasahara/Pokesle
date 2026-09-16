@@ -1,6 +1,6 @@
 # フィールド別 ランク必要エナジー
 
-自動生成: 2026-09-09 (pokesleep-tool e5ee5f0c)。編集せず `bun run tools/calc/fields.ts` で再生成する。
+自動生成: 2026-09-16 (pokesleep-tool b0f85405)。編集せず `bun run tools/calc/fields.ts` で再生成する。
 
 - 数値は週の累計エナジー (カビゴンの強さ)。ランク到達に必要な値
 - 「ねむけパワー目安」はにとよんツール内の睡眠リサーチ計算で使われる段階値 (powers)

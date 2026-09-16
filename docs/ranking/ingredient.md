@@ -1,6 +1,6 @@
 # 食材理論値ランキング
 
-自動生成: 2026-09-09 (pokesleep-tool e5ee5f0c)。編集せず `bun run tools/calc/ranking.ts` で再生成する。
+自動生成: 2026-09-16 (pokesleep-tool b0f85405)。編集せず `bun run tools/calc/ranking.ts` で再生成する。
 
 ## 前提
 
