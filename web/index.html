@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ポケスリ厳選チェッカー</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main>
+<h1>ポケスリ厳選チェッカー</h1>
+<p class="lead">引いた個体を、同じ条件でサブスキル 17 種 × せいかく を総当たりした「理想個体」と比べます。計算は <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT) のロジックをそのまま使っています。</p>
+
+<section class="card">
+<h2>個体</h2>
+<div class="grid">
+<label>ポケモン<select id="pokemon"></select></label>
+<label>レベル<input id="level" type="number" min="1" max="100" value="50"></label>
+<label>メインスキル <span id="skillName" class="muted"></span><select id="skillLevel"></select></label>
+</div>
+<h3>食材</h3>
+<div class="grid">
+<label>Lv1<span id="ing1" class="fixed"></span></label>
+<label>Lv30<select id="ing30"></select></label>
+<label>Lv60<select id="ing60"></select></label>
+</div>
+<h3>サブスキル</h3>
+<div class="grid">
+<label>Lv10<select id="sub10"></select></label>
+<label>Lv25<select id="sub25"></select></label>
+<label>Lv50<select id="sub50"></select></label>
+<label>Lv70<select id="sub70"></select></label>
+<label>Lv80<select id="sub80"></select></label>
+</div>
+<p class="note">スキルレベルアップ M/S は「メインスキルのレベル」に含めて入力してください (計算上は無視します)。灰色の枠は現在のレベルでは未解放なので計算に入りません。</p>
+<h3>せいかく</h3>
+<div class="grid">
+<label>上がる<select id="natureUp"></select></label>
+<label>下がる<select id="natureDown"></select></label>
+</div>
+</section>
+
+<section class="card">
+<h2>比較の基準</h2>
+<div class="grid">
+<label>理想個体の基準<select id="basis"></select></label>
+</div>
+<details>
+<summary>運用条件 (既定: 好物ではない、3 時間ごとにタップ)</summary>
+<div class="grid">
+<label>好物 / フィールド<select id="field"></select></label>
+<label>日中のタップ間隔<select id="tap"><option value="60">1 時間ごと</option><option value="180" selected>3 時間ごと</option><option value="480">8 時間ごと</option></select></label>
+<label>フィールドボーナス %<input id="fieldBonus" type="number" min="0" max="100" value="0"></label>
+</div>
+</details>
+<div class="actions">
+<button id="run" type="button">評価する</button>
+<button id="share" type="button" class="secondary">共有 URL をコピー</button>
+<span id="status" class="status"></span>
+</div>
+</section>
+
+<section id="result" class="card" hidden>
+<h2 id="resultTitle"></h2>
+<p><b>この個体:</b> <span id="mineLabel"></span></p>
+<p><b>理想個体:</b> <span id="idealLabel"></span></p>
+<p class="note" id="cond"></p>
+<h3>理想個体との比較</h3>
+<table><thead><tr><th>指標</th><th>理想個体</th><th>この個体</th><th>達成率</th></tr></thead><tbody id="cmpBody"></tbody></table>
+<h3>これより上を引く確率</h3>
+<p class="note">その指標でこの個体を上回る個体を、1 回の捕獲で引く確率。サブスキル出現率 (金 2.3% / 青 5.7% / 白 12.5%) とせいかくの一様分布で重み付け。金確定枠は考慮しません。</p>
+<table><thead><tr><th>指標</th><th>上を引く確率</th><th>その指標の理論最大</th><th>理論最大の構成</th></tr></thead><tbody id="probBody"></tbody></table>
+</section>
+
+<footer>計算ロジック: <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT License)。サブスキル出現率: ポケモンスリープ攻略・検証 Wiki* の検証値。ソース: <a href="https://github.com/hogasahara/Pokesle">hogasahara/Pokesle</a></footer>
+</main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -20,6 +20,12 @@
 - Wiki* (wikiwiki.jp/poke_sleep) は自動取得が 403 で失敗する。裏取りは Game8 / ポケらく / 課金中毒者の日記 / note を使う
 - 新しく調べた仕様は、回答と同時に `docs/notes/<テーマ>.md` に出典・確認日付きで追記する (追記型で蓄積)
 
+## Web ページ (GitHub Pages)
+
+- `web/` に厳選チェッカーの静的ページ。`bun run web/build.ts` で `web/dist` に出力し、`.github/workflows/pages.yml` が main と作業ブランチへの push で Pages にデプロイする
+- 計算コアは `web/src/calc.ts` (rate.ts と同じ考え方。ただしスキルレベルアップ M/S は無視し、利用者の入力したスキルレベルで固定)。UI は `web/src/main.ts`、総当たりは Web Worker
+- 動作確認は Playwright (Chromium は /opt/pw-browsers/chromium) で `web/dist` を静的配信して行う
+
 ## 計算基盤
 
 - `tools/pokesleep-tool/` は nitoyon/pokesleep-tool (MIT) の git submodule。SessionStart フックで自動取得される。無ければ `git submodule update --init --depth 1 tools/pokesleep-tool`
@@ -36,6 +42,7 @@ bun run tools/calc/skills.ts                   # docs/main-skills.md
 bun run tools/calc/fields.ts                   # docs/ranking/field-ranks.md
 bun run tools/calc/skillbuild.ts               # docs/ranking/skill-build-lv50.md (10 分前後。--from-cache で表だけ再生成)
 python3 tools/calc/recipes.py                  # docs/recipes.md (Game8 から取得)
+bun run web/build.ts                           # web/dist (Pages 用ビルド)
 ```
 
 生成物は直接編集しない。前提 (サブスキル構成、せいかく、レベル) を変えたいときはスクリプトを直す。

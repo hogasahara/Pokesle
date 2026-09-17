@@ -3,6 +3,10 @@
 
 ポケモンスリープの攻略情報を自分用にまとめ、Claude に質問して答えてもらうための知識ベース。
 
+## Web ページ
+
+厳選チェッカー: https://hogasahara.github.io/Pokesle/ (GitHub Pages、`web/` から自動デプロイ)
+
 ## 構成
 
 - [攻略サイト一覧.md](攻略サイト一覧.md) — 参考にする攻略サイト・ツール
@@ -14,6 +18,7 @@
 - [docs/notes/](docs/notes/) — 質問に答える中で調べた仕様の追記メモ
 - `tools/pokesleep-tool/` — [nitoyon/pokesleep-tool](https://github.com/nitoyon/pokesleep-tool) (MIT) の submodule。計算ロジックとデータの出典
 - `tools/calc/` — 上記を使ってランキング等を生成するスクリプト (bun / python3)
+- `web/` — 厳選チェッカーの静的ページ (bun build、Web Worker で総当たり)
 
 ## 使い方
 
