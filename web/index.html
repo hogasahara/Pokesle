@@ -32,8 +32,8 @@
 <div class="slots" id="subSummary"></div>
 
 <h3>せいかく</h3>
-<div class="row"><span class="slotlabel">上がる</span><div class="chips" id="natureUpChips"></div></div>
-<div class="row"><span class="slotlabel">下がる</span><div class="chips" id="natureDownChips"></div></div>
+<div class="row"><span class="slotlabel">↑</span><div class="chips" id="natureUpChips"></div></div>
+<div class="row"><span class="slotlabel">↓</span><div class="chips" id="natureDownChips"></div></div>
 <p class="current" id="natureName"></p>
 </section>
 
@@ -41,7 +41,7 @@
 <h2>比較の基準</h2>
 <div class="chips" id="basisChips"></div>
 <details>
-<summary>運用条件 (既定: 好物ではない、3h ごとタップ)</summary>
+<summary>運用条件 (既定: 好物でない、3h ごとタップ)</summary>
 <div class="row"><span class="slotlabel">タップ間隔</span><div class="chips" id="tapChips"></div></div>
 <div class="grid">
 <label>好物 / フィールド<select id="field"></select></label>
@@ -67,7 +67,7 @@
 <table><thead><tr><th>指標</th><th>上を引く確率</th><th>理論最大</th><th>その構成</th></tr></thead><tbody id="probBody"></tbody></table>
 </section>
 
-<footer>略称: きのみS=きのみの数S、おてボ=おてつだいボーナス、げんき回復ボ=げんき回復ボーナス、かけらボ=ゆめのかけらボーナス、リサEXP/睡眠EXP=EXPボーナス、スキLv=スキルレベルアップ、スキ確=スキル確率アップ、食確=食材確率アップ、おてスピ=おてつだいスピード、所持=最大所持数アップ、E=エナジー、FB=フィールドボーナス。チップを長押し/ホバーで正式名。<br>計算ロジック: <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT)。サブスキル出現率: ポケモンスリープ攻略・検証 Wiki*。ソース: <a href="https://github.com/hogasahara/Pokesle">hogasahara/Pokesle</a></footer>
+<footer>略称: きのみS=きのみの数S、おてボ=おてつだいボーナス、げんき回復ボ=げんき回復ボーナス、かけらボ=ゆめのかけらボーナス、リサEXP/睡眠EXP=EXPボーナス、スキLv=スキルレベルアップ、スキ確=スキル確率アップ、食確=食材確率アップ、おてスピ=おてつだいスピード、所持=最大所持数アップ、E=エナジー、FB=フィールドボーナス。せいかくは「上がる↑下がる↓(名前)」。食材名は先頭の飾り (ワカクサ、とくせん など) を省略。チップを長押し/ホバーで正式名。<br>計算ロジック: <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT)。サブスキル出現率: ポケモンスリープ攻略・検証 Wiki*。ソース: <a href="https://github.com/hogasahara/Pokesle">hogasahara/Pokesle</a></footer>
 </main>
 <script type="module" src="./main.js"></script>
 </body>

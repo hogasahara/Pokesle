@@ -3,7 +3,7 @@ import jaPokemonJson from "../../tools/pokesleep-tool/src/i18n/ja/pokemons.json"
 import jaDataJson from "../../tools/pokesleep-tool/src/i18n/ja/data.json";
 import jaSkillsJson from "../../tools/pokesleep-tool/src/i18n/ja/skills.json";
 import commonJson from "../../tools/pokesleep-tool/src/i18n/ja/common.json";
-import { EFFECT_SHORT, ING_EMOJI, SUB_SHORT } from "./names";
+import { AREA_SHORT, EFFECT_SHORT, ING_EMOJI, ING_SHORT, SUB_SHORT, skillShort } from "./names";
 import { ALL_NATURES, BLUE, GOLD, SLOT_LEVELS, SUBS, activeSlots, best, getMaxSkillLevel, isSkillStrengthZero, metric, pokemons, populationSize, probBetter, type Input, type IngredientType, type MetricKey, type Metrics, type PokemonData, type Result, type SubSkillType } from "./calc";
 
 const jaPokemon = (jaPokemonJson as { pokemons: Record<string, string> }).pokemons;
@@ -12,7 +12,8 @@ const jaSkills = (jaSkillsJson as { skills: Record<string, { name: string }> }).
 const areas = (commonJson as { area: string[] }).area;
 const jaSub = (s: string) => SUB_SHORT[s] ?? jaData.subskill[s] ?? s;
 const jaSubFull = (s: string) => jaData.subskill[s] ?? s;
-const jaIng = (s: string) => jaData.ingredients[s] ?? s;
+const jaIngFull = (s: string) => jaData.ingredients[s] ?? s;
+const jaIng = (s: string) => ING_SHORT[s] ?? jaIngFull(s);
 const ingE = (s: string) => ING_EMOJI[s] ?? jaIng(s);
 const jaNature = (s: string) => jaData.natures[s] ?? s;
 const jaEffect = (s: string) => EFFECT_SHORT[s] ?? jaData["nature effect"][s] ?? s;
@@ -20,7 +21,10 @@ const jaSpec: Record<string, string> = { Berries: "きのみ", Ingredients: "食
 const EFFECTS = ["Energy recovery", "Main skill chance", "Speed of help", "Ingredient finding", "EXP gains"];
 const targets: PokemonData[] = pokemons.filter((p) => p.frequency > 0 && p.specialty !== "All").sort((a, b) => a.id - b.id || a.name.localeCompare(b.name));
 const natureByEffect = new Map<string, string>();
-for (const n of ALL_NATURES) { const nt = new Nature(n); natureByEffect.set(`${nt.upEffect}|${nt.downEffect}`, n); }
+const natureEffects = new Map<string, { up: string; down: string }>();
+for (const n of ALL_NATURES) { const nt = new Nature(n); natureByEffect.set(`${nt.upEffect}|${nt.downEffect}`, n); natureEffects.set(n, { up: nt.upEffect, down: nt.downEffect }); }
+/** おてスピ↑食材確率↓(いじっぱり) の形式 */
+const natureShort = (n: string) => { const e = natureEffects.get(n); return !e || e.up === "No effect" ? "無補正" : `${jaEffect(e.up)}↑${jaEffect(e.down)}↓(${jaNature(n)})`; };
 const kata = (s: string) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60)).toLowerCase();
 
 // ---- 状態 ----
@@ -51,7 +55,7 @@ const chips = (container: HTMLElement, items: HTMLElement[]) => container.replac
 // ---- 各セクションの描画 ----
 function renderPokemon() {
 	const p = pokemon();
-	$("pokemonCurrent").textContent = `${jaPokemon[p.name] ?? p.name} · ${jaSpec[p.specialty]} · ${jaSkills[p.skill]?.name ?? p.skill} · ${[p.ing1, p.ing2, p.ing3].filter(Boolean).map((i) => ingE(i!.name)).join("")}`;
+	$("pokemonCurrent").textContent = `${jaPokemon[p.name] ?? p.name} · ${jaSpec[p.specialty]} · ${skillShort(jaSkills[p.skill]?.name ?? p.skill)} · ${[p.ing1, p.ing2, p.ing3].filter(Boolean).map((i) => ingE(i!.name)).join("")}`;
 	const q = kata($<HTMLInputElement>("pokemonSearch").value.trim());
 	const list = $("pokemonList");
 	if (!q) { list.replaceChildren(); return; }
@@ -76,16 +80,16 @@ function renderLevel() {
 }
 function renderIngredients() {
 	const p = pokemon();
-	$("ing1").textContent = `${ingE(p.ing1.name)}×${p.ing1.c1}`; $("ing1").setAttribute("title", jaIng(p.ing1.name));
+	$("ing1").textContent = `${ingE(p.ing1.name)}×${p.ing1.c1}`; $("ing1").setAttribute("title", jaIngFull(p.ing1.name));
 	chips($("ing30Chips"), [
-		chip(`${ingE(p.ing1.name)}×${p.ing1.c2}`, state.ing30 === "A", () => { state.ing30 = "A"; }, "ing", undefined, jaIng(p.ing1.name)),
-		chip(`${ingE(p.ing2.name)}×${p.ing2.c2}`, state.ing30 === "B", () => { state.ing30 = "B"; }, "ing", undefined, jaIng(p.ing2.name)),
+		chip(`${ingE(p.ing1.name)}×${p.ing1.c2}`, state.ing30 === "A", () => { state.ing30 = "A"; }, "ing", undefined, jaIngFull(p.ing1.name)),
+		chip(`${ingE(p.ing2.name)}×${p.ing2.c2}`, state.ing30 === "B", () => { state.ing30 = "B"; }, "ing", undefined, jaIngFull(p.ing2.name)),
 	]);
 	const c60 = [
-		chip(`${ingE(p.ing1.name)}×${p.ing1.c3}`, state.ing60 === "A", () => { state.ing60 = "A"; }, "ing", undefined, jaIng(p.ing1.name)),
-		chip(`${ingE(p.ing2.name)}×${p.ing2.c3}`, state.ing60 === "B", () => { state.ing60 = "B"; }, "ing", undefined, jaIng(p.ing2.name)),
+		chip(`${ingE(p.ing1.name)}×${p.ing1.c3}`, state.ing60 === "A", () => { state.ing60 = "A"; }, "ing", undefined, jaIngFull(p.ing1.name)),
+		chip(`${ingE(p.ing2.name)}×${p.ing2.c3}`, state.ing60 === "B", () => { state.ing60 = "B"; }, "ing", undefined, jaIngFull(p.ing2.name)),
 	];
-	if (p.ing3) c60.push(chip(`${ingE(p.ing3.name)}×${p.ing3.c3}`, state.ing60 === "C", () => { state.ing60 = "C"; }, "ing", undefined, jaIng(p.ing3.name)));
+	if (p.ing3) c60.push(chip(`${ingE(p.ing3.name)}×${p.ing3.c3}`, state.ing60 === "C", () => { state.ing60 = "C"; }, "ing", undefined, jaIngFull(p.ing3.name)));
 	chips($("ing60Chips"), c60);
 }
 function firstFreeSlot(): number { return state.subs.findIndex((s) => s === null); }
@@ -117,7 +121,7 @@ function renderNature() {
 	chips($("natureDownChips"), mk("natureDown", "natureUp"));
 	const n = natureByEffect.get(`${state.natureUp}|${state.natureDown}`);
 	const half = (state.natureUp === "No effect") !== (state.natureDown === "No effect");
-	$("natureName").textContent = half ? "上がる・下がるは両方選ぶか、両方なし (無補正) にしてください" : n ? (n === "Bashful" ? "無補正 (てれや など)" : jaNature(n)) : "この組み合わせのせいかくはありません";
+	$("natureName").textContent = half ? "↑と↓は両方選ぶか、両方なし (無補正) にしてください" : n ? natureShort(n) : "この組み合わせのせいかくはありません";
 	$<HTMLButtonElement>("run").disabled = half || !n;
 }
 function basisOptions(): { key: string; label: string }[] {
@@ -125,7 +129,7 @@ function basisOptions(): { key: string; label: string }[] {
 	const names = new Set<string>([p.ing1.name, state.ing30 === "B" ? p.ing2.name : p.ing1.name, state.ing60 === "B" ? p.ing2.name : state.ing60 === "C" && p.ing3 ? p.ing3.name : p.ing1.name]);
 	return [
 		{ key: "total", label: "合計E" }, { key: "skillCount", label: "スキル回数" }, { key: "berry", label: "きのみE" },
-		...[...names].map((n) => ({ key: `ing:${n}`, label: `${ingE(n)} 個数` })), { key: "ingTotal", label: "食材計" },
+		...[...names].map((n) => ({ key: `ing:${n}`, label: `${ingE(n)}${jaIng(n)}` })), { key: "ingTotal", label: "食材計" },
 	];
 }
 function renderBasis() {
@@ -167,7 +171,7 @@ const f0 = (n: number) => Math.round(n).toLocaleString("ja-JP");
 const f1 = (n: number) => n.toFixed(1);
 const f2 = (n: number) => n.toFixed(2);
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-const label = (m: Metrics) => `${m.subs.filter(Boolean).map(jaSub).join(" / ") || "サブスキルなし"} + ${m.nature === "Bashful" ? "無補正" : jaNature(m.nature)}`;
+const label = (m: Metrics) => `${m.subs.filter(Boolean).map(jaSub).join(" / ") || "サブスキルなし"} + ${natureShort(m.nature)}`;
 
 function readInput(): Input {
 	return {
@@ -206,7 +210,7 @@ function render(input: Input, p: PokemonData, res: Result) {
 		{ key: "total", name: "合計E", fmt: f0 }, { key: "berry", name: "きのみE", fmt: f0 },
 		{ key: "skillCount", name: "スキル回数", fmt: f2 }, { key: "skillE", name: "スキルE", fmt: f0 },
 		{ key: "ingTotal", name: "食材計", fmt: f1 },
-		...Object.keys(mine.ing).map((n) => ({ key: `ing:${n}` as MetricKey, name: `${ingE(n)} ${jaIng(n)}`, fmt: f1 })),
+		...Object.keys(mine.ing).map((n) => ({ key: `ing:${n}` as MetricKey, name: `${ingE(n)}${jaIng(n)}`, fmt: f1 })),
 	];
 	const zero = isSkillStrengthZero(p.skill);
 	const ingSeq = [p.ing1, input.ingredient[1] === "A" ? p.ing1 : p.ing2, input.ingredient[2] === "A" ? p.ing1 : input.ingredient[2] === "B" ? p.ing2 : p.ing3 ?? p.ing1].map((i) => ingE(i.name)).join("");
@@ -231,8 +235,8 @@ function render(input: Input, p: PokemonData, res: Result) {
 
 // ---- 初期化 ----
 const fieldSel = $<HTMLSelectElement>("field");
-fieldSel.append(el("option", { value: "-1" }, ["好物ではない (きのみ 1 倍)"]), el("option", { value: "-2" }, ["好物 (きのみ 2 倍)"]));
-areas.forEach((a, i) => fieldSel.append(el("option", { value: String(i) }, [a])));
+fieldSel.append(el("option", { value: "-1" }, ["好物でない"]), el("option", { value: "-2" }, ["好物"]));
+areas.forEach((_, i) => fieldSel.append(el("option", { value: String(i) }, [AREA_SHORT[i] ?? areas[i]])));
 fieldSel.addEventListener("change", () => { state.field = Number(fieldSel.value); });
 $<HTMLInputElement>("fieldBonus").addEventListener("input", (e) => { state.fieldBonus = Number((e.target as HTMLInputElement).value) || 0; });
 $<HTMLInputElement>("level").addEventListener("input", (e) => { const v = Number((e.target as HTMLInputElement).value); if (v >= 1 && v <= 100) { state.level = v; renderLevel(); renderSubs(); } });

@@ -12,3 +12,15 @@ export const ING_EMOJI: Record<string, string> = {
 export const EFFECT_SHORT: Record<string, string> = {
 	"Energy recovery": "げんき回復", "Main skill chance": "スキル確率", "Speed of help": "おてスピ", "Ingredient finding": "食材確率", "EXP gains": "EXP",
 };
+export const ING_SHORT: Record<string, string> = {
+	leek: "ねぎ", mushroom: "キノコ", egg: "エッグ", potato: "ポテト", apple: "リンゴ", herb: "ハーブ", sausage: "ミート", milk: "ミルク", honey: "ミツ", oil: "オイル",
+	ginger: "ジンジャー", tomato: "トマト", cacao: "カカオ", tail: "シッポ", soy: "大豆", corn: "コーン", coffee: "コーヒー", pumpkin: "カボチャ", avocado: "アボカド",
+};
+export const AREA_SHORT = ["ワカクサ", "シアン", "トープ", "ウノハナ", "ラピス", "ゴールド", "アンバー", "ワカクサEX", "シアンEX"];
+/** メインスキル名の略称: 固有名があればそれだけ、(ランダム) は (乱) */
+export function skillShort(name: string): string {
+	const m = name.match(/^(.+?) \((.+)\)$/);
+	let s = name;
+	if (m) s = m[2] === "ランダム" ? `${m[1]}(乱)` : m[1];
+	return s.replace("ゆめのかけらゲット", "かけらゲット").replace("おてつだいサポート", "おてサポ").replace("おてつだいブースト", "おてブースト").replace("料理パワーアップ", "料理パワー");
+}
