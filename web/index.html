@@ -9,25 +9,25 @@
 <body>
 <main>
 <h1>ポケスリ厳選チェッカー</h1>
-<p class="lead">引いた個体を、同じ条件でサブスキル 17 種 × せいかく を総当たりした「理想個体」と比べます。計算は <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT) のロジックをそのまま使っています。</p>
+<p class="lead">引いた個体を、同条件で総当たりした理想個体と比べます。計算は <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT)。</p>
 
 <section class="card">
 <h2>ポケモン</h2>
 <p class="current" id="pokemonCurrent"></p>
-<input id="pokemonSearch" type="search" placeholder="名前で検索 (ひらがな可、部分一致)" autocomplete="off">
+<input id="pokemonSearch" type="search" placeholder="名前で検索 (ひらがな可)" autocomplete="off">
 <div class="chips" id="pokemonList"></div>
 
 <h3>レベル</h3>
 <div class="row"><div class="chips" id="levelChips"></div><input id="level" type="number" min="1" max="100" value="50" class="short" aria-label="レベル (任意)"></div>
-<h3>メインスキルのレベル <span class="muted">(スキルレベルアップ M/S の分も含めた表示値)</span></h3>
+<h3>スキルLv <span class="muted">(スキLvM/S 込みの表示値)</span></h3>
 <div class="chips" id="skillLevelChips"></div>
 
 <h3>食材</h3>
-<div class="row"><span class="slot">Lv1: <span id="ing1"></span></span></div>
-<div class="row"><span class="slotlabel">Lv30</span><div class="chips" id="ing30Chips"></div></div>
-<div class="row"><span class="slotlabel">Lv60</span><div class="chips" id="ing60Chips"></div></div>
+<div class="row"><span class="slotlabel">1</span><span class="slot" id="ing1"></span></div>
+<div class="row"><span class="slotlabel">30</span><div class="chips" id="ing30Chips"></div></div>
+<div class="row"><span class="slotlabel">60</span><div class="chips" id="ing60Chips"></div></div>
 
-<h3>サブスキル <span class="muted">(タップした順に Lv10 → 25 → 50 → 70 → 80。もう一度タップで解除)</span></h3>
+<h3>サブスキル <span class="muted">(タップ順に 10→25→50→70→80、再タップで解除)</span></h3>
 <div class="chips" id="subChips"></div>
 <div class="slots" id="subSummary"></div>
 
@@ -41,11 +41,11 @@
 <h2>比較の基準</h2>
 <div class="chips" id="basisChips"></div>
 <details>
-<summary>運用条件 (既定: 好物ではない、3 時間ごとにタップ)</summary>
+<summary>運用条件 (既定: 好物ではない、3h ごとタップ)</summary>
 <div class="row"><span class="slotlabel">タップ間隔</span><div class="chips" id="tapChips"></div></div>
 <div class="grid">
 <label>好物 / フィールド<select id="field"></select></label>
-<label>フィールドボーナス %<input id="fieldBonus" type="number" min="0" max="100" value="0"></label>
+<label>フィールドボーナス (FB) %<input id="fieldBonus" type="number" min="0" max="100" value="0"></label>
 </div>
 </details>
 <div class="actions">
@@ -63,11 +63,11 @@
 <h3>理想個体との比較</h3>
 <table><thead><tr><th>指標</th><th>理想個体</th><th>この個体</th><th>達成率</th></tr></thead><tbody id="cmpBody"></tbody></table>
 <h3>これより上を引く確率</h3>
-<p class="note">その指標でこの個体を上回る個体を、1 回の捕獲で引く確率。サブスキル出現率 (金 2.3% / 青 5.7% / 白 12.5%) とせいかくの一様分布で重み付け。金確定枠は考慮しません。</p>
-<table><thead><tr><th>指標</th><th>上を引く確率</th><th>その指標の理論最大</th><th>理論最大の構成</th></tr></thead><tbody id="probBody"></tbody></table>
+<p class="note">その指標でこの個体を上回る個体を 1 回の捕獲で引く確率 (サブスキル出現率 金 2.3% / 青 5.7% / 白 12.5%、金確定枠は未考慮)。</p>
+<table><thead><tr><th>指標</th><th>上を引く確率</th><th>理論最大</th><th>その構成</th></tr></thead><tbody id="probBody"></tbody></table>
 </section>
 
-<footer>計算ロジック: <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT License)。サブスキル出現率: ポケモンスリープ攻略・検証 Wiki* の検証値。ソース: <a href="https://github.com/hogasahara/Pokesle">hogasahara/Pokesle</a></footer>
+<footer>略称: きのみS=きのみの数S、おてボ=おてつだいボーナス、げんき回復ボ=げんき回復ボーナス、かけらボ=ゆめのかけらボーナス、リサEXP/睡眠EXP=EXPボーナス、スキLv=スキルレベルアップ、スキ確=スキル確率アップ、食確=食材確率アップ、おてスピ=おてつだいスピード、所持=最大所持数アップ、E=エナジー、FB=フィールドボーナス。チップを長押し/ホバーで正式名。<br>計算ロジック: <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT)。サブスキル出現率: ポケモンスリープ攻略・検証 Wiki*。ソース: <a href="https://github.com/hogasahara/Pokesle">hogasahara/Pokesle</a></footer>
 </main>
 <script type="module" src="./main.js"></script>
 </body>

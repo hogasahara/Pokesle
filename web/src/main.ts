@@ -3,16 +3,19 @@ import jaPokemonJson from "../../tools/pokesleep-tool/src/i18n/ja/pokemons.json"
 import jaDataJson from "../../tools/pokesleep-tool/src/i18n/ja/data.json";
 import jaSkillsJson from "../../tools/pokesleep-tool/src/i18n/ja/skills.json";
 import commonJson from "../../tools/pokesleep-tool/src/i18n/ja/common.json";
+import { EFFECT_SHORT, ING_EMOJI, SUB_SHORT } from "./names";
 import { ALL_NATURES, BLUE, GOLD, SLOT_LEVELS, SUBS, activeSlots, best, getMaxSkillLevel, isSkillStrengthZero, metric, pokemons, populationSize, probBetter, type Input, type IngredientType, type MetricKey, type Metrics, type PokemonData, type Result, type SubSkillType } from "./calc";
 
 const jaPokemon = (jaPokemonJson as { pokemons: Record<string, string> }).pokemons;
 const jaData = jaDataJson as { subskill: Record<string, string>; natures: Record<string, string>; "nature effect": Record<string, string>; ingredients: Record<string, string> };
 const jaSkills = (jaSkillsJson as { skills: Record<string, { name: string }> }).skills;
 const areas = (commonJson as { area: string[] }).area;
-const jaSub = (s: string) => jaData.subskill[s] ?? s;
+const jaSub = (s: string) => SUB_SHORT[s] ?? jaData.subskill[s] ?? s;
+const jaSubFull = (s: string) => jaData.subskill[s] ?? s;
 const jaIng = (s: string) => jaData.ingredients[s] ?? s;
+const ingE = (s: string) => ING_EMOJI[s] ?? jaIng(s);
 const jaNature = (s: string) => jaData.natures[s] ?? s;
-const jaEffect = (s: string) => jaData["nature effect"][s] ?? s;
+const jaEffect = (s: string) => EFFECT_SHORT[s] ?? jaData["nature effect"][s] ?? s;
 const jaSpec: Record<string, string> = { Berries: "きのみ", Ingredients: "食材", Skills: "スキル", All: "オール" };
 const EFFECTS = ["Energy recovery", "Main skill chance", "Speed of help", "Ingredient finding", "EXP gains"];
 const targets: PokemonData[] = pokemons.filter((p) => p.frequency > 0 && p.specialty !== "All").sort((a, b) => a.id - b.id || a.name.localeCompare(b.name));
@@ -37,8 +40,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string,
 	for (const c of children) e.append(c);
 	return e;
 };
-const chip = (label: string, on: boolean, onClick: () => void, cls = "", badge?: string) => {
-	const b = el("button", { type: "button", class: `chip ${cls}${on ? " on" : ""}` }, [label]);
+const chip = (label: string, on: boolean, onClick: () => void, cls = "", badge?: string, title?: string) => {
+	const b = el("button", { type: "button", class: `chip ${cls}${on ? " on" : ""}`, ...(title && { title }) }, [label]);
 	if (badge) b.append(el("span", { class: "badge" }, [badge]));
 	b.addEventListener("click", () => { onClick(); renderAll(); });
 	return b;
@@ -48,7 +51,7 @@ const chips = (container: HTMLElement, items: HTMLElement[]) => container.replac
 // ---- 各セクションの描画 ----
 function renderPokemon() {
 	const p = pokemon();
-	$("pokemonCurrent").textContent = `${jaPokemon[p.name] ?? p.name} (${jaSpec[p.specialty]}、${jaSkills[p.skill]?.name ?? p.skill})`;
+	$("pokemonCurrent").textContent = `${jaPokemon[p.name] ?? p.name} · ${jaSpec[p.specialty]} · ${jaSkills[p.skill]?.name ?? p.skill} · ${[p.ing1, p.ing2, p.ing3].filter(Boolean).map((i) => ingE(i!.name)).join("")}`;
 	const q = kata($<HTMLInputElement>("pokemonSearch").value.trim());
 	const list = $("pokemonList");
 	if (!q) { list.replaceChildren(); return; }
@@ -73,16 +76,16 @@ function renderLevel() {
 }
 function renderIngredients() {
 	const p = pokemon();
-	$("ing1").textContent = `${jaIng(p.ing1.name)} ×${p.ing1.c1}`;
+	$("ing1").textContent = `${ingE(p.ing1.name)}×${p.ing1.c1}`; $("ing1").setAttribute("title", jaIng(p.ing1.name));
 	chips($("ing30Chips"), [
-		chip(`${jaIng(p.ing1.name)} ×${p.ing1.c2}`, state.ing30 === "A", () => { state.ing30 = "A"; }),
-		chip(`${jaIng(p.ing2.name)} ×${p.ing2.c2}`, state.ing30 === "B", () => { state.ing30 = "B"; }),
+		chip(`${ingE(p.ing1.name)}×${p.ing1.c2}`, state.ing30 === "A", () => { state.ing30 = "A"; }, "ing", undefined, jaIng(p.ing1.name)),
+		chip(`${ingE(p.ing2.name)}×${p.ing2.c2}`, state.ing30 === "B", () => { state.ing30 = "B"; }, "ing", undefined, jaIng(p.ing2.name)),
 	]);
 	const c60 = [
-		chip(`${jaIng(p.ing1.name)} ×${p.ing1.c3}`, state.ing60 === "A", () => { state.ing60 = "A"; }),
-		chip(`${jaIng(p.ing2.name)} ×${p.ing2.c3}`, state.ing60 === "B", () => { state.ing60 = "B"; }),
+		chip(`${ingE(p.ing1.name)}×${p.ing1.c3}`, state.ing60 === "A", () => { state.ing60 = "A"; }, "ing", undefined, jaIng(p.ing1.name)),
+		chip(`${ingE(p.ing2.name)}×${p.ing2.c3}`, state.ing60 === "B", () => { state.ing60 = "B"; }, "ing", undefined, jaIng(p.ing2.name)),
 	];
-	if (p.ing3) c60.push(chip(`${jaIng(p.ing3.name)} ×${p.ing3.c3}`, state.ing60 === "C", () => { state.ing60 = "C"; }));
+	if (p.ing3) c60.push(chip(`${ingE(p.ing3.name)}×${p.ing3.c3}`, state.ing60 === "C", () => { state.ing60 = "C"; }, "ing", undefined, jaIng(p.ing3.name)));
 	chips($("ing60Chips"), c60);
 }
 function firstFreeSlot(): number { return state.subs.findIndex((s) => s === null); }
@@ -94,15 +97,15 @@ function renderSubs() {
 		return chip(jaSub(s), idx >= 0, () => {
 			if (idx >= 0) { state.subs[idx] = null; return; }
 			const free = firstFreeSlot(); if (free >= 0) state.subs[free] = s;
-		}, `${color(s)}${idx >= 0 && idx >= k ? " inactive" : ""}`, idx >= 0 ? `Lv${SLOT_LEVELS[idx]}` : undefined);
+		}, `${color(s)}${idx >= 0 && idx >= k ? " inactive" : ""}`, idx >= 0 ? `${SLOT_LEVELS[idx]}` : undefined, jaSubFull(s));
 	});
 	const noneIdx = state.subs.indexOf("");
-	items.push(chip("なし", noneIdx >= 0, () => { const free = firstFreeSlot(); if (free >= 0) state.subs[free] = ""; }, "none", noneIdx >= 0 ? state.subs.map((s, i) => (s === "" ? `Lv${SLOT_LEVELS[i]}` : "")).filter(Boolean).join(",") : undefined));
+	items.push(chip("なし", noneIdx >= 0, () => { const free = firstFreeSlot(); if (free >= 0) state.subs[free] = ""; }, "none", noneIdx >= 0 ? state.subs.map((s, i) => (s === "" ? `${SLOT_LEVELS[i]}` : "")).filter(Boolean).join(",") : undefined));
 	items.push(chip("クリア", false, () => { state.subs = [null, null, null, null, null]; }, "clear"));
 	chips($("subChips"), items);
 	$("subSummary").replaceChildren(...SLOT_LEVELS.map((lv, i) => {
 		const s = state.subs[i];
-		return el("span", { class: `slot${i >= k ? " inactive" : ""}` }, [`Lv${lv}: ${s === null ? "—" : s === "" ? "なし" : jaSub(s)}`]);
+		return el("span", { class: `slot${i >= k ? " inactive" : ""}` }, [el("b", {}, [String(lv)]), ` ${s === null ? "—" : s === "" ? "なし" : jaSub(s)}`]);
 	}));
 }
 function renderNature() {
@@ -121,15 +124,15 @@ function basisOptions(): { key: string; label: string }[] {
 	const p = pokemon();
 	const names = new Set<string>([p.ing1.name, state.ing30 === "B" ? p.ing2.name : p.ing1.name, state.ing60 === "B" ? p.ing2.name : state.ing60 === "C" && p.ing3 ? p.ing3.name : p.ing1.name]);
 	return [
-		{ key: "total", label: "合計エナジー" }, { key: "skillCount", label: "スキル発動回数" }, { key: "berry", label: "きのみエナジー" },
-		...[...names].map((n) => ({ key: `ing:${n}`, label: `${jaIng(n)} の個数` })), { key: "ingTotal", label: "食材の合計個数" },
+		{ key: "total", label: "合計E" }, { key: "skillCount", label: "スキル回数" }, { key: "berry", label: "きのみE" },
+		...[...names].map((n) => ({ key: `ing:${n}`, label: `${ingE(n)} 個数` })), { key: "ingTotal", label: "食材計" },
 	];
 }
 function renderBasis() {
 	const opts = basisOptions();
 	if (!opts.some((o) => o.key === state.basis)) state.basis = "total";
 	chips($("basisChips"), opts.map((o) => chip(o.label, state.basis === o.key, () => { state.basis = o.key; })));
-	chips($("tapChips"), [[60, "1 時間ごと"], [180, "3 時間ごと"], [480, "8 時間ごと"]].map(([v, l]) => chip(String(l), state.tap === v, () => { state.tap = Number(v); })));
+	chips($("tapChips"), [[60, "1h"], [180, "3h"], [480, "8h"]].map(([v, l]) => chip(String(l), state.tap === v, () => { state.tap = Number(v); })));
 	const f = $<HTMLSelectElement>("field"); if (f.value !== String(state.field)) f.value = String(state.field);
 	const fb = $<HTMLInputElement>("fieldBonus"); if (Number(fb.value) !== state.fieldBonus) fb.value = String(state.fieldBonus);
 }
@@ -200,20 +203,21 @@ function render(input: Input, p: PokemonData, res: Result) {
 	const basis = state.basis as MetricKey;
 	const ideal = best(pool, basis);
 	const rows: { key: MetricKey; name: string; fmt: (n: number) => string }[] = [
-		{ key: "total", name: "合計エナジー/日", fmt: f0 }, { key: "berry", name: "きのみエナジー/日", fmt: f0 },
-		{ key: "skillCount", name: "スキル発動/日", fmt: f2 }, { key: "skillE", name: "スキルエナジー/日", fmt: f0 },
-		{ key: "ingTotal", name: "食材合計/日", fmt: f1 },
-		...Object.keys(mine.ing).map((n) => ({ key: `ing:${n}` as MetricKey, name: `${jaIng(n)}/日`, fmt: f1 })),
+		{ key: "total", name: "合計E", fmt: f0 }, { key: "berry", name: "きのみE", fmt: f0 },
+		{ key: "skillCount", name: "スキル回数", fmt: f2 }, { key: "skillE", name: "スキルE", fmt: f0 },
+		{ key: "ingTotal", name: "食材計", fmt: f1 },
+		...Object.keys(mine.ing).map((n) => ({ key: `ing:${n}` as MetricKey, name: `${ingE(n)} ${jaIng(n)}`, fmt: f1 })),
 	];
 	const zero = isSkillStrengthZero(p.skill);
-	$("resultTitle").textContent = `${jaPokemon[p.name] ?? p.name} Lv${input.level} / スキルLv${input.skillLevel} / 食材 ${input.ingredient}`;
+	const ingSeq = [p.ing1, input.ingredient[1] === "A" ? p.ing1 : p.ing2, input.ingredient[2] === "A" ? p.ing1 : input.ingredient[2] === "B" ? p.ing2 : p.ing3 ?? p.ing1].map((i) => ingE(i.name)).join("");
+	$("resultTitle").textContent = `${jaPokemon[p.name] ?? p.name} Lv${input.level} · スキLv${input.skillLevel} · ${ingSeq}`;
 	$("mineLabel").textContent = label(mine);
 	$("idealLabel").textContent = `${label(ideal)}  (基準: ${basisOptions().find((o) => o.key === basis)?.label ?? basis})`;
-	$("cond").textContent = `${$<HTMLSelectElement>("field").selectedOptions[0].textContent}、日中 ${input.tap} 分ごとにタップ、フィールドボーナス ${input.fieldBonus}%、イベントなし、げんきエール 18×3 回/日、母集団 ${pool.length.toLocaleString()} 通り (${(res.elapsedMs / 1000).toFixed(1)} 秒)`;
+	$("cond").textContent = `${$<HTMLSelectElement>("field").selectedOptions[0].textContent} · ${input.tap / 60}h ごとタップ · FB ${input.fieldBonus}% · イベントなし · 母集団 ${pool.length.toLocaleString()} 通り (${(res.elapsedMs / 1000).toFixed(1)} 秒)`;
 	const tb = $("cmpBody"); tb.replaceChildren();
 	for (const r of rows) {
 		const a = metric(ideal, r.key), b = metric(mine, r.key);
-		if (r.key === "skillE" && zero) { tb.append(el("tr", {}, [el("td", {}, [r.name]), el("td", { colspan: "3", class: "muted" }, ["エナジー換算 0 のスキル"])])); continue; }
+		if (r.key === "skillE" && zero) { tb.append(el("tr", {}, [el("td", {}, [r.name]), el("td", { colspan: "3", class: "muted" }, ["換算 0"])])); continue; }
 		tb.append(el("tr", { class: r.key === basis ? "basis" : "" }, [el("td", {}, [r.name]), el("td", { class: "num" }, [r.fmt(a)]), el("td", { class: "num" }, [r.fmt(b)]), el("td", { class: "num" }, [a > 0 ? pct(b / a) : "-"])]));
 	}
 	const pb = $("probBody"); pb.replaceChildren();
