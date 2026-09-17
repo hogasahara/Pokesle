@@ -16,6 +16,7 @@
 <p class="current" id="pokemonCurrent"></p>
 <input id="pokemonSearch" type="search" placeholder="名前で検索 (ひらがな可)" autocomplete="off">
 <div class="chips" id="pokemonList"></div>
+<details class="box"><summary id="boxTitle"></summary><div id="boxList"></div></details>
 
 <h3>レベル</h3>
 <div class="row"><div class="chips" id="levelChips"></div><input id="level" type="number" min="1" max="100" value="50" class="short" aria-label="レベル (任意)"></div>
@@ -48,8 +49,11 @@
 <label>フィールドボーナス (FB) %<input id="fieldBonus" type="number" min="0" max="100" value="0"></label>
 </div>
 </details>
+<h3>保存 <span class="muted">(このブラウザに保存。同じ名前なら上書き)</span></h3>
+<div class="row"><input id="monName" type="text" placeholder="名前" class="name" autocomplete="off"><div class="chips" id="rankChips"></div></div>
 <div class="actions">
 <button id="run" type="button">評価する</button>
+<button id="save" type="button" class="secondary">保存</button>
 <button id="share" type="button" class="secondary">共有 URL をコピー</button>
 <span id="status" class="status"></span>
 </div>

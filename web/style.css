@@ -46,3 +46,10 @@ tr.basis { background: var(--basis); }
 .muted { color: var(--muted); font-weight: normal; font-size: 0.8rem; }
 footer { color: var(--muted); font-size: 0.8rem; margin: 24px 0; }
 @media (max-width: 600px) { table { display: block; overflow-x: auto; } }
+
+input.name { flex: 1 1 12em; min-width: 10em; }
+details.box { margin-top: 8px; }
+.boxrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 0.85rem; }
+.boxmain { flex: 1; min-width: 0; }
+.boxmain b { font-weight: 600; }
+.boxbtns { display: flex; gap: 4px; flex-shrink: 0; }

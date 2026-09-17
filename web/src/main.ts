@@ -3,6 +3,7 @@ import jaPokemonJson from "../../tools/pokesleep-tool/src/i18n/ja/pokemons.json"
 import jaDataJson from "../../tools/pokesleep-tool/src/i18n/ja/data.json";
 import jaSkillsJson from "../../tools/pokesleep-tool/src/i18n/ja/skills.json";
 import commonJson from "../../tools/pokesleep-tool/src/i18n/ja/common.json";
+import { defaultName, findByName, isDefaultName, listBySpecies, loadBox, remove as removeMon, upsert, type Rank, type SavedMon, type SavedResult } from "./box";
 import { AREA_SHORT, EFFECT_SHORT, ING_EMOJI, ING_SHORT, SUB_SHORT, skillShort } from "./names";
 import { ALL_NATURES, BLUE, GOLD, SLOT_LEVELS, SUBS, activeSlots, best, getMaxSkillLevel, isSkillStrengthZero, metric, pokemons, populationSize, probBetter, type Input, type IngredientType, type MetricKey, type Metrics, type PokemonData, type Result, type SubSkillType } from "./calc";
 
@@ -32,8 +33,11 @@ interface State {
 	pokemonName: string; level: number; skillLevel: number; ing30: "A" | "B"; ing60: "A" | "B" | "C";
 	subs: (SubSkillType | "" | null)[]; // null = 未割り当て, "" = なし
 	natureUp: string; natureDown: string; basis: string; field: number; tap: number; fieldBonus: number;
+	name: string; rank: Rank;
 }
-const state: State = { pokemonName: targets[0].name, level: 50, skillLevel: 6, ing30: "B", ing60: "C", subs: [null, null, null, null, null], natureUp: "No effect", natureDown: "No effect", basis: "total", field: -1, tap: 180, fieldBonus: 0 };
+const RANKS: { key: Rank; label: string; mark: string }[] = [{ key: "main", label: "一軍", mark: "★" }, { key: "candidate", label: "候補", mark: "☆" }, { key: "none", label: "なし", mark: "－" }];
+let lastResult: SavedResult | null = null;
+const state: State = { pokemonName: targets[0].name, level: 50, skillLevel: 6, ing30: "B", ing60: "C", subs: [null, null, null, null, null], natureUp: "No effect", natureDown: "No effect", basis: "total", field: -1, tap: 180, fieldBonus: 0, name: "", rank: "none" };
 const pokemon = (): PokemonData => targets.find((p) => p.name === state.pokemonName) ?? targets[0];
 
 // ---- DOM ヘルパ ----
@@ -47,7 +51,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string,
 const chip = (label: string, on: boolean, onClick: () => void, cls = "", badge?: string, title?: string) => {
 	const b = el("button", { type: "button", class: `chip ${cls}${on ? " on" : ""}`, ...(title && { title }) }, [label]);
 	if (badge) b.append(el("span", { class: "badge" }, [badge]));
-	b.addEventListener("click", () => { onClick(); renderAll(); });
+	b.addEventListener("click", () => { onClick(); lastResult = null; renderAll(); });
 	return b;
 };
 const chips = (container: HTMLElement, items: HTMLElement[]) => container.replaceChildren(...items);
@@ -64,8 +68,13 @@ function renderPokemon() {
 	if (hits.length === 0) list.replaceChildren(el("span", { class: "muted" }, ["該当なし"]));
 }
 function selectPokemon(name: string) {
+	const prev = state.pokemonName;
 	state.pokemonName = name;
 	const p = pokemon();
+	if (prev !== name || !state.name) {
+		const ja = jaPokemon[p.name] ?? p.name;
+		if (!state.name || (isDefaultName(state.name) && !state.name.startsWith(ja))) state.name = defaultName(ja);
+	}
 	state.skillLevel = Math.min(state.skillLevel, getMaxSkillLevel(p.skill));
 	if (state.ing60 === "C" && !p.ing3) state.ing60 = "B";
 	if (!basisOptions().some((o) => o.key === state.basis)) state.basis = "total";
@@ -140,7 +149,54 @@ function renderBasis() {
 	const f = $<HTMLSelectElement>("field"); if (f.value !== String(state.field)) f.value = String(state.field);
 	const fb = $<HTMLInputElement>("fieldBonus"); if (Number(fb.value) !== state.fieldBonus) fb.value = String(state.fieldBonus);
 }
-function renderAll() { renderPokemon(); renderLevel(); renderIngredients(); renderSubs(); renderNature(); renderBasis(); }
+function renderSave() {
+	const nameIn = $<HTMLInputElement>("monName");
+	if (nameIn.value !== state.name) nameIn.value = state.name;
+	chips($("rankChips"), RANKS.map((r) => chip(`${r.mark}${r.label}`, state.rank === r.key, () => { state.rank = r.key; })));
+	const exists = findByName(state.name.trim());
+	$<HTMLButtonElement>("save").textContent = exists ? "上書き保存" : "保存";
+}
+function applySaved(m: SavedMon) {
+	state.pokemonName = m.pokemonName; state.level = m.level; state.skillLevel = m.skillLevel;
+	state.ing30 = m.ingredient[1] === "A" ? "A" : "B"; state.ing60 = (["A", "B", "C"].includes(m.ingredient[2]) ? m.ingredient[2] : "C") as State["ing60"];
+	state.subs = SLOT_LEVELS.map((_, i) => { const v = m.subs[i]; return v === null || v === undefined ? null : v === "" ? "" : (SUBS.includes(v as SubSkillType) ? (v as SubSkillType) : null); });
+	const eff = natureEffects.get(m.nature); state.natureUp = eff?.up ?? "No effect"; state.natureDown = eff?.down ?? "No effect";
+	state.name = m.name; state.rank = m.rank ?? "none"; lastResult = null;
+	selectPokemon(m.pokemonName);
+}
+function renderBox() {
+	const p = pokemon();
+	const list = listBySpecies(p.name);
+	$("boxTitle").textContent = `保存済みの${jaPokemon[p.name] ?? p.name} (${list.length})`;
+	const body = $("boxList"); body.replaceChildren();
+	if (list.length === 0) { body.append(el("p", { class: "muted" }, ["まだありません"])); return; }
+	for (const m of list) {
+		const r = RANKS.find((x) => x.key === m.rank) ?? RANKS[2];
+		const subs = m.subs.filter((v): v is string => !!v).map(jaSub).join("/") || "サブなし";
+		const res = m.result ? ` · E ${f0(m.result.total)} · ス ${f2(m.result.skillCount)} · 上 ${pct(m.result.pTotal)}` : "";
+		const row = el("div", { class: "boxrow" }, [
+			el("div", { class: "boxmain" }, [el("b", {}, [`${r.mark}${m.name}`]), ` Lv${m.level} スキLv${m.skillLevel} ${m.ingredient} · ${subs} · ${natureShort(m.nature)}`, el("span", { class: "muted" }, [res])]),
+			el("div", { class: "boxbtns" }, []),
+		]);
+		const load = el("button", { type: "button", class: "chip" }, ["読込"]);
+		load.addEventListener("click", () => { applySaved(m); renderAll(); $("pokemonCurrent").scrollIntoView({ behavior: "smooth", block: "start" }); });
+		const del = el("button", { type: "button", class: "chip clear" }, ["削除"]);
+		del.addEventListener("click", () => { if (confirm(`「${m.name}」を削除しますか?`)) { removeMon(m.id); renderAll(); } });
+		row.lastElementChild!.append(load, del);
+		body.append(row);
+	}
+}
+function saveCurrent() {
+	const name = state.name.trim();
+	if (!name) { $("status").textContent = "名前を入力してください"; return; }
+	const exists = findByName(name);
+	if (exists && !confirm(`「${name}」を上書きしますか?`)) return;
+	state.name = name;
+	upsert({ name, rank: state.rank, pokemonName: state.pokemonName, level: state.level, skillLevel: state.skillLevel, ingredient: `A${state.ing30}${state.ing60}`, subs: state.subs, nature: natureByEffect.get(`${state.natureUp}|${state.natureDown}`) ?? "Bashful", ...(lastResult && { result: lastResult }) });
+	$("status").textContent = exists ? `「${name}」を上書きしました` : `「${name}」を保存しました`;
+	renderAll();
+}
+function renderAll() { renderPokemon(); renderLevel(); renderIngredients(); renderSubs(); renderNature(); renderBasis(); renderSave(); renderBox(); }
 
 // ---- URL 共有 ----
 function toQuery(): string {
@@ -149,6 +205,7 @@ function toQuery(): string {
 	q.set("s", state.subs.map((s) => (s === null ? "0" : s === "" ? "z" : (SUBS.indexOf(s) + 1).toString(36))).join(""));
 	q.set("nu", String(EFFECTS.indexOf(state.natureUp) + 1)); q.set("nd", String(EFFECTS.indexOf(state.natureDown) + 1));
 	q.set("b", state.basis); q.set("f", String(state.field)); q.set("t", String(state.tap)); q.set("fb", String(state.fieldBonus));
+	if (state.name) q.set("n", state.name); if (state.rank !== "none") q.set("r", state.rank);
 	return q.toString();
 }
 function fromQuery(): boolean {
@@ -162,6 +219,7 @@ function fromQuery(): boolean {
 	state.subs = SLOT_LEVELS.map((_, i) => { const c = s[i]; if (!c || c === "0") return null; if (c === "z") return ""; const idx = parseInt(c, 36) - 1; return SUBS[idx] ?? null; });
 	state.natureUp = EFFECTS[Number(q.get("nu")) - 1] ?? "No effect"; state.natureDown = EFFECTS[Number(q.get("nd")) - 1] ?? "No effect";
 	state.basis = q.get("b") ?? "total"; state.field = Number(q.get("f") ?? -1); state.tap = Number(q.get("t") ?? 180); state.fieldBonus = Number(q.get("fb") ?? 0);
+	state.name = q.get("n") ?? ""; state.rank = (["main", "candidate", "none"].includes(q.get("r") ?? "") ? q.get("r") : "none") as Rank;
 	selectPokemon(p);
 	return true;
 }
@@ -229,6 +287,8 @@ function render(input: Input, p: PokemonData, res: Result) {
 		const bestM = best(pool, r.key);
 		pb.append(el("tr", { class: r.key === basis ? "basis" : "" }, [el("td", {}, [r.name]), el("td", { class: "num" }, [pct(probBetter(pool, mine, r.key))]), el("td", { class: "num" }, [r.fmt(metric(bestM, r.key))]), el("td", { class: "small" }, [label(bestM)])]));
 	}
+	lastResult = { total: mine.total, berry: mine.berry, skillCount: mine.skillCount, ingTotal: mine.ingTotal, pTotal: probBetter(pool, mine, "total"), pSkill: probBetter(pool, mine, "skillCount"), pIng: probBetter(pool, mine, "ingTotal"), basis: state.basis, field: input.fieldIndex, tap: input.tap, fieldBonus: input.fieldBonus, at: new Date().toISOString() };
+	renderSave();
 	$("result").hidden = false;
 	$("result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -242,6 +302,9 @@ $<HTMLInputElement>("fieldBonus").addEventListener("input", (e) => { state.field
 $<HTMLInputElement>("level").addEventListener("input", (e) => { const v = Number((e.target as HTMLInputElement).value); if (v >= 1 && v <= 100) { state.level = v; renderLevel(); renderSubs(); } });
 $<HTMLInputElement>("pokemonSearch").addEventListener("input", renderPokemon);
 $("run").addEventListener("click", runCalc);
+$("save").addEventListener("click", saveCurrent);
+$<HTMLInputElement>("monName").addEventListener("input", (e) => { state.name = (e.target as HTMLInputElement).value; renderSave(); });
+$<HTMLInputElement>("level").addEventListener("input", () => { lastResult = null; });
 $("share").addEventListener("click", async () => {
 	const url = `${location.origin}${location.pathname}?${toQuery()}`;
 	try { await navigator.clipboard.writeText(url); $("status").textContent = "URL をコピーしました"; } catch { $("status").textContent = url; }
