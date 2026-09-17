@@ -12,44 +12,39 @@
 <p class="lead">引いた個体を、同じ条件でサブスキル 17 種 × せいかく を総当たりした「理想個体」と比べます。計算は <a href="https://github.com/nitoyon/pokesleep-tool">nitoyon/pokesleep-tool</a> (MIT) のロジックをそのまま使っています。</p>
 
 <section class="card">
-<h2>個体</h2>
-<div class="grid">
-<label>ポケモン<select id="pokemon"></select></label>
-<label>レベル<input id="level" type="number" min="1" max="100" value="50"></label>
-<label>メインスキル <span id="skillName" class="muted"></span><select id="skillLevel"></select></label>
-</div>
+<h2>ポケモン</h2>
+<p class="current" id="pokemonCurrent"></p>
+<input id="pokemonSearch" type="search" placeholder="名前で検索 (ひらがな可、部分一致)" autocomplete="off">
+<div class="chips" id="pokemonList"></div>
+
+<h3>レベル</h3>
+<div class="row"><div class="chips" id="levelChips"></div><input id="level" type="number" min="1" max="100" value="50" class="short" aria-label="レベル (任意)"></div>
+<h3>メインスキルのレベル <span class="muted">(スキルレベルアップ M/S の分も含めた表示値)</span></h3>
+<div class="chips" id="skillLevelChips"></div>
+
 <h3>食材</h3>
-<div class="grid">
-<label>Lv1<span id="ing1" class="fixed"></span></label>
-<label>Lv30<select id="ing30"></select></label>
-<label>Lv60<select id="ing60"></select></label>
-</div>
-<h3>サブスキル</h3>
-<div class="grid">
-<label>Lv10<select id="sub10"></select></label>
-<label>Lv25<select id="sub25"></select></label>
-<label>Lv50<select id="sub50"></select></label>
-<label>Lv70<select id="sub70"></select></label>
-<label>Lv80<select id="sub80"></select></label>
-</div>
-<p class="note">スキルレベルアップ M/S は「メインスキルのレベル」に含めて入力してください (計算上は無視します)。灰色の枠は現在のレベルでは未解放なので計算に入りません。</p>
+<div class="row"><span class="slot">Lv1: <span id="ing1"></span></span></div>
+<div class="row"><span class="slotlabel">Lv30</span><div class="chips" id="ing30Chips"></div></div>
+<div class="row"><span class="slotlabel">Lv60</span><div class="chips" id="ing60Chips"></div></div>
+
+<h3>サブスキル <span class="muted">(タップした順に Lv10 → 25 → 50 → 70 → 80。もう一度タップで解除)</span></h3>
+<div class="chips" id="subChips"></div>
+<div class="slots" id="subSummary"></div>
+
 <h3>せいかく</h3>
-<div class="grid">
-<label>上がる<select id="natureUp"></select></label>
-<label>下がる<select id="natureDown"></select></label>
-</div>
+<div class="row"><span class="slotlabel">上がる</span><div class="chips" id="natureUpChips"></div></div>
+<div class="row"><span class="slotlabel">下がる</span><div class="chips" id="natureDownChips"></div></div>
+<p class="current" id="natureName"></p>
 </section>
 
 <section class="card">
 <h2>比較の基準</h2>
-<div class="grid">
-<label>理想個体の基準<select id="basis"></select></label>
-</div>
+<div class="chips" id="basisChips"></div>
 <details>
 <summary>運用条件 (既定: 好物ではない、3 時間ごとにタップ)</summary>
+<div class="row"><span class="slotlabel">タップ間隔</span><div class="chips" id="tapChips"></div></div>
 <div class="grid">
 <label>好物 / フィールド<select id="field"></select></label>
-<label>日中のタップ間隔<select id="tap"><option value="60">1 時間ごと</option><option value="180" selected>3 時間ごと</option><option value="480">8 時間ごと</option></select></label>
 <label>フィールドボーナス %<input id="fieldBonus" type="number" min="0" max="100" value="0"></label>
 </div>
 </details>

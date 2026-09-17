@@ -1,25 +1,42 @@
-:root { color-scheme: light dark; --bg: #f6f7f9; --card: #fff; --fg: #1d1f24; --muted: #6b7280; --accent: #2b6cb0; --line: #e5e7eb; --basis: #fff7d6; }
-@media (prefers-color-scheme: dark) { :root { --bg: #14161a; --card: #1e2127; --fg: #e6e8eb; --muted: #9aa3ae; --accent: #6ea8fe; --line: #2f343c; --basis: #3a3413; } }
+:root { color-scheme: light dark; --bg: #f6f7f9; --card: #fff; --fg: #1d1f24; --muted: #6b7280; --accent: #2b6cb0; --line: #d9dde3; --basis: #fff7d6; --gold: #b8860b; --blue: #2f6fcf; --white: #6b7280; }
+@media (prefers-color-scheme: dark) { :root { --bg: #14161a; --card: #1e2127; --fg: #e6e8eb; --muted: #9aa3ae; --accent: #6ea8fe; --line: #3a3f48; --basis: #3a3413; --gold: #e0b341; --blue: #7aa6f5; --white: #b0b7c1; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; font-size: 15px; line-height: 1.5; }
 main { max-width: 900px; margin: 0 auto; padding: 16px; }
 h1 { font-size: 1.4rem; margin: 8px 0; }
 h2 { font-size: 1.1rem; margin: 0 0 8px; }
-h3 { font-size: 0.95rem; margin: 14px 0 6px; color: var(--muted); }
+h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--muted); }
 .lead, .note { color: var(--muted); font-size: 0.9rem; }
+.current { margin: 4px 0 8px; font-weight: 600; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
+.slotlabel { color: var(--muted); font-size: 0.85rem; min-width: 3.2em; }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--muted); }
-label.inactive { opacity: 0.45; }
 select, input { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; }
-.fixed { padding: 7px 8px; border: 1px dashed var(--line); border-radius: 6px; color: var(--fg); }
+input[type=search] { width: 100%; }
+input.short { width: 6em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { position: relative; font: inherit; font-size: 0.9rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; line-height: 1.3; -webkit-tap-highlight-color: transparent; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip.gold { border-color: var(--gold); color: var(--gold); }
+.chip.blue { border-color: var(--blue); color: var(--blue); }
+.chip.white { border-color: var(--white); color: var(--fg); }
+.chip.gold.on { background: var(--gold); color: #fff; }
+.chip.blue.on { background: var(--blue); color: #fff; }
+.chip.white.on { background: var(--white); color: #fff; }
+.chip.none, .chip.clear { border-style: dashed; color: var(--muted); }
+.chip.none.on { background: var(--muted); color: #fff; border-style: solid; }
+.chip.inactive { opacity: 0.45; }
+.chip .badge { margin-left: 6px; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.25); }
+.slots { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 0.85rem; }
+.slot { color: var(--muted); } .slot.inactive { opacity: 0.45; }
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
-button { font: inherit; padding: 9px 16px; border-radius: 8px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
-button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+button:not(.chip) { font: inherit; padding: 9px 16px; border-radius: 8px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
+button.secondary { background: transparent !important; color: var(--accent) !important; border: 1px solid var(--accent) !important; }
 button:disabled { opacity: 0.5; cursor: wait; }
 .status { color: var(--muted); font-size: 0.9rem; }
 details { margin-top: 10px; } summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
-details .grid { margin-top: 10px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
