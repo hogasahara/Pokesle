@@ -2,14 +2,14 @@
  * 厳選評価の計算コア (ブラウザ / bun 共通)。
  * tools/calc/rate.ts と同じ考え方で、個体 1 体を同条件の総当たり母集団と比べる。
  * - スキルレベルはユーザー指定値で固定 (スキルレベルアップ M/S は無視する)
- * - 食材構成は個体のもので固定
+ * - 理想個体は個体と同じ食材構成の中で求め、「上を引く確率」は食材構成 (一様) も母集団に含める
  */
 import pokemons, { type PokemonData } from "../../tools/pokesleep-tool/src/data/pokemons";
 import Nature from "../../tools/pokesleep-tool/src/util/Nature";
 import PokemonIv from "../../tools/pokesleep-tool/src/util/PokemonIv";
 import PokemonStrength, { isSkillStrengthZero } from "../../tools/pokesleep-tool/src/util/PokemonStrength";
 import { getMaxSkillLevel } from "../../tools/pokesleep-tool/src/util/MainSkill";
-import type { IngredientType } from "../../tools/pokesleep-tool/src/util/PokemonRp";
+import { IngredientTypes, type IngredientType } from "../../tools/pokesleep-tool/src/util/PokemonRp";
 import { createStrengthParameter } from "../../tools/pokesleep-tool/src/util/StrengthParameter";
 import SubSkill, { type SubSkillType } from "../../tools/pokesleep-tool/src/util/SubSkill";
 import SubSkillList from "../../tools/pokesleep-tool/src/util/SubSkillList";
@@ -56,6 +56,7 @@ export interface Metrics {
 	ing: Record<string, number>;
 	subs: SubSkillType[];
 	nature: string;
+	ingredient: IngredientType;
 	weight: number;
 }
 
@@ -84,17 +85,22 @@ export function makeParam(input: Input) {
 	});
 }
 
-export function evaluateOne(input: Input, subs: SubSkillType[], nature: string, param = makeParam(input)): Metrics {
+export function ingredientTypes(pokemonName: string): IngredientType[] {
+	const p = pokemons.find((x) => x.name === pokemonName)!;
+	return IngredientTypes.filter((t) => p.ing3 || !t.includes("C"));
+}
+
+export function evaluateOne(input: Input, subs: SubSkillType[], nature: string, param = makeParam(input), ingredient: IngredientType = input.ingredient): Metrics {
 	const eff = subs.filter((s) => !NOOP.has(s));
 	const list: Record<string, SubSkill> = {};
 	eff.forEach((s, i) => { list[`lv${SLOT_LEVELS[i]}`] = new SubSkill(s); });
 	const pokemon = pokemons.find((p) => p.name === input.pokemonName)!;
 	const skillLevel = Math.min(Math.max(1, input.skillLevel), getMaxSkillLevel(pokemon.skill));
-	const iv = new PokemonIv({ pokemonName: input.pokemonName, level: input.level, subSkills: new SubSkillList(list), nature: new Nature(nature), ingredient: input.ingredient, skillLevel });
+	const iv = new PokemonIv({ pokemonName: input.pokemonName, level: input.level, subSkills: new SubSkillList(list), nature: new Nature(nature), ingredient, skillLevel });
 	const r = new PokemonStrength(iv, param).calculate();
 	const ing: Record<string, number> = {};
 	for (const i of r.ingredients) ing[i.name] = (ing[i.name] ?? 0) + i.count;
-	return { total: r.totalStrength, berry: r.berryTotalStrength, skillCount: r.skillCount, skillE: r.skillStrength, ingTotal: r.ingredients.reduce((s, i) => s + i.count, 0), ing, subs, nature, weight: 0 };
+	return { total: r.totalStrength, berry: r.berryTotalStrength, skillCount: r.skillCount, skillE: r.skillStrength, ingTotal: r.ingredients.reduce((s, i) => s + i.count, 0), ing, subs, nature, ingredient, weight: 0 };
 }
 
 function* combos(k: number): Generator<SubSkillType[]> {
@@ -109,12 +115,12 @@ function* combos(k: number): Generator<SubSkillType[]> {
 	}
 }
 
-export function populationSize(level: number): number {
+export function populationSize(level: number, pokemonName?: string): number {
 	const k = activeSlots(level);
 	const n = SUBS.length;
 	let c = 1;
 	for (let i = 0; i < k; i++) c = (c * (n - i)) / (i + 1);
-	return Math.round(c) * NATURES.length;
+	return Math.round(c) * NATURES.length * (pokemonName ? ingredientTypes(pokemonName).length : 1);
 }
 
 export interface Result { mine: Metrics; pool: Metrics[]; elapsedMs: number }
@@ -127,15 +133,16 @@ export function run(input: Input, onProgress?: (done: number, total: number) => 
 	const mine = evaluateOne(input, mySubs, input.nature, param);
 	const memo = new Map<string, Metrics>();
 	const pool: Metrics[] = [];
-	const total = populationSize(input.level);
+	const ings = ingredientTypes(input.pokemonName);
+	const total = populationSize(input.level, input.pokemonName);
 	let done = 0;
-	for (const subs of combos(k)) {
+	for (const ingredient of ings) for (const subs of combos(k)) {
 		const eff = subs.filter((s) => !NOOP.has(s)).sort().join("|");
-		const w = comboProb(subs);
+		const w = comboProb(subs) / ings.length;
 		for (const nature of NATURES) {
-			const key = `${eff}#${nature}`;
+			const key = `${ingredient}#${eff}#${nature}`;
 			let m = memo.get(key);
-			if (!m) { m = evaluateOne(input, subs, nature, param); memo.set(key, m); }
+			if (!m) { m = evaluateOne(input, subs, nature, param, ingredient); memo.set(key, m); }
 			pool.push({ ...m, subs, nature, weight: w * NATURE_W(nature) });
 			done++;
 		}

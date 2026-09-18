@@ -246,7 +246,7 @@ function runCalc() {
 	const p = pokemon();
 	const btn = $<HTMLButtonElement>("run");
 	btn.disabled = true;
-	$("status").textContent = `計算中… 母集団 ${populationSize(input.level).toLocaleString()} 通り`;
+	$("status").textContent = `計算中… 母集団 ${populationSize(input.level, input.pokemonName).toLocaleString()} 通り`;
 	$("result").hidden = true;
 	worker?.terminate();
 	worker = new Worker("./worker.js");
@@ -263,7 +263,8 @@ function runCalc() {
 function render(input: Input, p: PokemonData, res: Result) {
 	const { mine, pool } = res;
 	const basis = state.basis as MetricKey;
-	const ideal = best(pool, basis);
+	const sameIng = pool.filter((m) => m.ingredient === input.ingredient);
+	const ideal = best(sameIng, basis);
 	const rows: { key: MetricKey; name: string; fmt: (n: number) => string }[] = [
 		{ key: "total", name: "合計E", fmt: f0 }, { key: "berry", name: "きのみE", fmt: f0 },
 		{ key: "skillCount", name: "スキル回数", fmt: f2 }, { key: "skillE", name: "スキルE", fmt: f0 },
@@ -275,7 +276,7 @@ function render(input: Input, p: PokemonData, res: Result) {
 	$("resultTitle").textContent = `${jaPokemon[p.name] ?? p.name} Lv${input.level} · スキLv${input.skillLevel} · ${ingSeq}`;
 	$("mineLabel").textContent = label(mine);
 	$("idealLabel").textContent = `${label(ideal)}  (基準: ${basisOptions().find((o) => o.key === basis)?.label ?? basis})`;
-	$("cond").textContent = `${$<HTMLSelectElement>("field").selectedOptions[0].textContent} · ${input.tap / 60}h ごとタップ · FB ${input.fieldBonus}% · イベントなし · 母集団 ${pool.length.toLocaleString()} 通り (${(res.elapsedMs / 1000).toFixed(1)} 秒)`;
+	$("cond").textContent = `${$<HTMLSelectElement>("field").selectedOptions[0].textContent} · ${input.tap / 60}h ごとタップ · FB ${input.fieldBonus}% · イベントなし · 母集団 ${pool.length.toLocaleString()} 通り (食材構成 ${pool.length / sameIng.length} 種込み、${(res.elapsedMs / 1000).toFixed(1)} 秒)`;
 	const tb = $("cmpBody"); tb.replaceChildren();
 	for (const r of rows) {
 		const a = metric(ideal, r.key), b = metric(mine, r.key);
@@ -284,7 +285,7 @@ function render(input: Input, p: PokemonData, res: Result) {
 	}
 	const pb = $("probBody"); pb.replaceChildren();
 	for (const r of rows.filter((r) => r.key !== "skillE" && (r.key !== "berry" || p.specialty === "Berries"))) {
-		const bestM = best(pool, r.key);
+		const bestM = best(sameIng, r.key);
 		pb.append(el("tr", { class: r.key === basis ? "basis" : "" }, [el("td", {}, [r.name]), el("td", { class: "num" }, [pct(probBetter(pool, mine, r.key))]), el("td", { class: "num" }, [r.fmt(metric(bestM, r.key))]), el("td", { class: "small" }, [label(bestM)])]));
 	}
 	lastResult = { total: mine.total, berry: mine.berry, skillCount: mine.skillCount, ingTotal: mine.ingTotal, pTotal: probBetter(pool, mine, "total"), pSkill: probBetter(pool, mine, "skillCount"), pIng: probBetter(pool, mine, "ingTotal"), basis: state.basis, field: input.fieldIndex, tap: input.tap, fieldBonus: input.fieldBonus, at: new Date().toISOString() };

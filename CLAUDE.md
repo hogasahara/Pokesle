@@ -23,7 +23,7 @@
 ## Web ページ (GitHub Pages)
 
 - `web/` に厳選チェッカーの静的ページ。`bun run web/build.ts` で `web/dist` に出力し、`.github/workflows/pages.yml` が main と作業ブランチへの push で Pages にデプロイする
-- 計算コアは `web/src/calc.ts` (rate.ts と同じ考え方。ただしスキルレベルアップ M/S は無視し、利用者の入力したスキルレベルで固定)。UI は `web/src/main.ts`、総当たりは Web Worker
+- 計算コアは `web/src/calc.ts` (rate.ts と同じ考え方。ただしスキルレベルアップ M/S は無視し、利用者の入力したスキルレベルで固定)。理想個体は同じ食材構成内の最大、「上を引く確率」は食材構成も母集団に含める (2026-09-18 変更)。UI は `web/src/main.ts`、総当たりは Web Worker
 - 動作確認は Playwright (Chromium は /opt/pw-browsers/chromium) で `web/dist` を静的配信して行う
 - 公開の運用 (2026-09-17 に利用者が承認済み): 変更は作業ブランチにコミット・プッシュした後、`main` へ fast-forward でマージしてプッシュしてよい。github-pages 環境の保護ルールで `main` 以外からはデプロイできない
 - デプロイ後は公開 URL の HTML / JS に変更が含まれているか curl で確認する (このサンドボックスからはブラウザで公開 URL を開けない)
