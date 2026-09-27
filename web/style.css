@@ -59,3 +59,6 @@ tr.sep td { border-top: 2px solid var(--line); }
 table.cmp th.num { text-align: right; }
 table.cmp { display: block; overflow-x: auto; white-space: nowrap; }
 .chip:disabled { opacity: 0.4; cursor: not-allowed; }
+table.cmp th:first-child, table.cmp td:first-child { position: sticky; left: 0; background: var(--card); z-index: 1; }
+table.cmp tr.basis th:first-child, table.cmp tr.basis td:first-child { background: var(--basis); }
+#compare { margin-top: 10px; }
