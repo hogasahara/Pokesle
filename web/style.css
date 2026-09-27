@@ -53,3 +53,9 @@ details.box { margin-top: 8px; }
 .boxmain { flex: 1; min-width: 0; }
 .boxmain b { font-weight: 600; }
 .boxbtns { display: flex; gap: 4px; flex-shrink: 0; }
+
+td .sub { font-size: 0.75rem; color: var(--muted); }
+tr.sep td { border-top: 2px solid var(--line); }
+table.cmp th.num { text-align: right; }
+table.cmp { display: block; overflow-x: auto; white-space: nowrap; }
+.chip:disabled { opacity: 0.4; cursor: not-allowed; }

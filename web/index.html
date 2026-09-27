@@ -16,7 +16,12 @@
 <p class="current" id="pokemonCurrent"></p>
 <input id="pokemonSearch" type="search" placeholder="名前で検索 (ひらがな可)" autocomplete="off">
 <div class="chips" id="pokemonList"></div>
-<details class="box"><summary id="boxTitle"></summary><div id="boxList"></div></details>
+<details class="box"><summary id="boxTitle"></summary><div id="boxList"></div>
+<div id="compare" hidden>
+<h3>比較 <span class="muted">(保存時の評価結果を並べる。理想は各指標の理論最大)</span></h3>
+<p class="note" id="compareNote"></p>
+<table class="cmp"><thead><tr id="compareHead"></tr></thead><tbody id="compareBody"></tbody></table>
+</div></details>
 
 <h3>レベル</h3>
 <div class="row"><div class="chips" id="levelChips"></div><input id="level" type="number" min="1" max="100" value="50" class="short" aria-label="レベル (任意)"></div>

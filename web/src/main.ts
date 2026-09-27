@@ -37,6 +37,7 @@ interface State {
 }
 const RANKS: { key: Rank; label: string; mark: string }[] = [{ key: "main", label: "一軍", mark: "★" }, { key: "candidate", label: "候補", mark: "☆" }, { key: "none", label: "なし", mark: "－" }];
 let lastResult: SavedResult | null = null;
+const compareIds = new Set<string>();
 const state: State = { pokemonName: targets[0].name, level: 50, skillLevel: 6, ing30: "B", ing60: "C", subs: [null, null, null, null, null], natureUp: "No effect", natureDown: "No effect", basis: "total", field: -1, tap: 180, fieldBonus: 0, name: "", rank: "none" };
 const pokemon = (): PokemonData => targets.find((p) => p.name === state.pokemonName) ?? targets[0];
 
@@ -173,7 +174,10 @@ function renderBox() {
 	for (const m of list) {
 		const r = RANKS.find((x) => x.key === m.rank) ?? RANKS[2];
 		const subs = m.subs.filter((v): v is string => !!v).map(jaSub).join("/") || "サブなし";
-		const res = m.result ? ` · E ${f0(m.result.total)} · ス ${f2(m.result.skillCount)} · 上 ${pct(m.result.pTotal)}` : "";
+		const rr = m.result;
+		const bk = state.basis;
+		const bv = rr?.m[bk];
+		const res = rr ? (bv !== undefined ? ` · ${basisOptions().find((o) => o.key === bk)?.label ?? bk} ${fmtKey(bk)(bv)} · 上 ${rr.p[bk] !== undefined ? pct(rr.p[bk]) : "-"}` : " · 結果あり") : " · 未評価";
 		const row = el("div", { class: "boxrow" }, [
 			el("div", { class: "boxmain" }, [el("b", {}, [`${r.mark}${m.name}`]), ` Lv${m.level} スキLv${m.skillLevel} ${m.ingredient} · ${subs} · ${natureShort(m.nature)}`, el("span", { class: "muted" }, [res])]),
 			el("div", { class: "boxbtns" }, []),
@@ -181,11 +185,48 @@ function renderBox() {
 		const load = el("button", { type: "button", class: "chip" }, ["読込"]);
 		load.addEventListener("click", () => { applySaved(m); renderAll(); $("pokemonCurrent").scrollIntoView({ behavior: "smooth", block: "start" }); });
 		const del = el("button", { type: "button", class: "chip clear" }, ["削除"]);
-		del.addEventListener("click", () => { if (confirm(`「${m.name}」を削除しますか?`)) { removeMon(m.id); renderAll(); } });
-		row.lastElementChild!.append(load, del);
+		del.addEventListener("click", () => { if (confirm(`「${m.name}」を削除しますか?`)) { removeMon(m.id); compareIds.delete(m.id); renderAll(); } });
+		const cmp = el("button", { type: "button", class: `chip${compareIds.has(m.id) ? " on" : ""}`, ...(rr ? {} : { disabled: "", title: "評価してから保存すると比較できます" }) }, ["比較"]);
+		cmp.addEventListener("click", () => { if (compareIds.has(m.id)) compareIds.delete(m.id); else compareIds.add(m.id); renderCompare(); renderBox(); });
+		row.lastElementChild!.append(cmp, load, del);
 		body.append(row);
 	}
 }
+const fmtKey = (k: string) => (k === "skillCount" ? f2 : k === "ingTotal" || k.startsWith("ing:") ? f1 : f0);
+const keyName = (k: string) => k === "total" ? "合計E" : k === "berry" ? "きのみE" : k === "skillCount" ? "スキル回数" : k === "skillE" ? "スキルE" : k === "ingTotal" ? "食材計" : k.startsWith("ing:") ? `${ingE(k.slice(4))}${jaIng(k.slice(4))}` : k;
+function renderCompare() {
+	const sec = $("compare");
+	const mons = loadBox().filter((m) => compareIds.has(m.id) && m.result);
+	if (mons.length === 0) { sec.hidden = true; return; }
+	sec.hidden = false;
+	const keys: string[] = [];
+	for (const k of ["total", "berry", "skillCount", "skillE", "ingTotal"]) if (mons.some((m) => m.result!.m[k] !== undefined)) keys.push(k);
+	for (const m of mons) for (const k of Object.keys(m.result!.m)) if (k.startsWith("ing:") && !keys.includes(k)) keys.push(k);
+	const conds = new Set(mons.map((m) => `${m.result!.field}|${m.result!.tap}|${m.result!.fieldBonus}`));
+	$("compareNote").textContent = conds.size > 1 ? "注意: 運用条件 (好物 / タップ間隔 / FB) が異なる個体が混ざっています。" : `条件: ${fieldLabel(mons[0].result!.field)} · ${mons[0].result!.tap / 60}h ごとタップ · FB ${mons[0].result!.fieldBonus}%`;
+	const head = $("compareHead"); head.replaceChildren(el("th", {}, ["指標"]), el("th", { class: "num" }, ["理想"]), ...mons.map((m) => el("th", { class: "num" }, [`${RANKS.find((r) => r.key === m.rank)?.mark ?? ""}${m.name}`])));
+	const body = $("compareBody"); body.replaceChildren();
+	for (const k of keys) {
+		const idealV = Math.max(...mons.map((m) => m.result!.ideal[k]?.v ?? 0));
+		const tr = el("tr", { class: k === state.basis ? "basis" : "" }, [el("td", {}, [keyName(k)]), el("td", { class: "num" }, [idealV > 0 ? fmtKey(k)(idealV) : "-"])]);
+		for (const m of mons) {
+			const v = m.result!.m[k];
+			if (v === undefined) { tr.append(el("td", { class: "num muted" }, ["-"])); continue; }
+			const cell = el("td", { class: "num" }, [fmtKey(k)(v)]);
+			if (idealV > 0) cell.append(el("span", { class: "sub" }, [` ${pct(v / idealV)}`]));
+			tr.append(cell);
+		}
+		body.append(tr);
+	}
+	const trP = el("tr", { class: "sep" }, [el("td", {}, [`上を引く確率 (${basisOptions().find((o) => o.key === state.basis)?.label ?? state.basis})`]), el("td", {}, [""])]);
+	for (const m of mons) trP.append(el("td", { class: "num" }, [m.result!.p[state.basis] !== undefined ? pct(m.result!.p[state.basis]) : "-"]));
+	body.append(trP);
+	const idealOf = mons.map((m) => m.result!.ideal[state.basis]).filter(Boolean).sort((a, b) => b.v - a.v)[0];
+	const trS = el("tr", {}, [el("td", {}, ["構成"]), el("td", { class: "small" }, [idealOf?.label ?? "-"])]);
+	for (const m of mons) trS.append(el("td", { class: "small" }, [`Lv${m.level} スキLv${m.skillLevel} ${m.ingredient} · ${m.subs.filter((v): v is string => !!v).map(jaSub).join("/") || "サブなし"} · ${natureShort(m.nature)}`]));
+	body.append(trS);
+}
+const fieldLabel = (f: number) => (f === -1 ? "好物でない" : f === -2 ? "好物" : AREA_SHORT[f] ?? String(f));
 function saveCurrent() {
 	const name = state.name.trim();
 	if (!name) { $("status").textContent = "名前を入力してください"; return; }
@@ -196,7 +237,7 @@ function saveCurrent() {
 	$("status").textContent = exists ? `「${name}」を上書きしました` : `「${name}」を保存しました`;
 	renderAll();
 }
-function renderAll() { renderPokemon(); renderLevel(); renderIngredients(); renderSubs(); renderNature(); renderBasis(); renderSave(); renderBox(); }
+function renderAll() { renderPokemon(); renderLevel(); renderIngredients(); renderSubs(); renderNature(); renderBasis(); renderSave(); renderBox(); renderCompare(); }
 
 // ---- URL 共有 ----
 function toQuery(): string {
@@ -288,7 +329,13 @@ function render(input: Input, p: PokemonData, res: Result) {
 		const bestM = best(sameIng, r.key);
 		pb.append(el("tr", { class: r.key === basis ? "basis" : "" }, [el("td", {}, [r.name]), el("td", { class: "num" }, [pct(probBetter(pool, mine, r.key))]), el("td", { class: "num" }, [r.fmt(metric(bestM, r.key))]), el("td", { class: "small" }, [label(bestM)])]));
 	}
-	lastResult = { total: mine.total, berry: mine.berry, skillCount: mine.skillCount, ingTotal: mine.ingTotal, pTotal: probBetter(pool, mine, "total"), pSkill: probBetter(pool, mine, "skillCount"), pIng: probBetter(pool, mine, "ingTotal"), basis: state.basis, field: input.fieldIndex, tap: input.tap, fieldBonus: input.fieldBonus, at: new Date().toISOString() };
+	const mm: Record<string, number> = {}; const pp: Record<string, number> = {}; const id: Record<string, { v: number; label: string }> = {};
+	for (const r of rows) {
+		if (r.key === "skillE" && zero) continue;
+		mm[r.key] = metric(mine, r.key); pp[r.key] = probBetter(pool, mine, r.key);
+		const b = best(sameIng, r.key); id[r.key] = { v: metric(b, r.key), label: label(b) };
+	}
+	lastResult = { v: 2, m: mm, p: pp, ideal: id, basis: state.basis, field: input.fieldIndex, tap: input.tap, fieldBonus: input.fieldBonus, at: new Date().toISOString() };
 	renderSave();
 	$("result").hidden = false;
 	$("result").scrollIntoView({ behavior: "smooth", block: "start" });
